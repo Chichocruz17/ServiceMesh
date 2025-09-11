@@ -280,5 +280,71 @@ graph TD
     class AppA,SidecarA,MeshGW1 cluster1
     class AppB,SidecarB,MeshGW2 cluster2
 ```
+```mermaid
+graph TD
+    subgraph "Consul Control Plane"
+        ConsulServer["fa:fa-server Consul Server (CA)"]
+    end
 
+    subgraph "OpenShift Data Plane"
+        subgraph "Pod A"
+            AppA["App-A Container"]
+            SidecarA["fa:fa-shield-alt Envoy Sidecar A"]
+            AppA -- "Logical Call" --> AppB
+        end
+        
+        subgraph "Pod B"
+            AppB["App-B Container"]
+            SidecarB["fa:fa-shield-alt Envoy Sidecar B"]
+        end
+        
+        ConsulServer -- "1. Distributes SPIFFE Certs" --> SidecarA & SidecarB
+        AppA -- "2. Plaintext to Sidecar" --> SidecarA
+        SidecarA -- "3. Automatic mTLS Encryption" --> SidecarB
+        SidecarB -- "4. Decrypts & Forwards Plaintext" --> AppB
+    end
+
+    classDef control fill:#e0f2fe,stroke:#3b82f6;
+    classDef data fill:#dcfce7,stroke:#22c55e;
+    class ConsulServer control;
+    class AppA, AppB, SidecarA, SidecarB data;
+```
+
+```mermaid
+graph TD
+    subgraph "External Systems"
+        Database["fa:fa-database Legacy Database"]
+    end
+
+    subgraph "OpenShift Cluster"
+        Vault["fa:fa-key HashiCorp Vault"]
+        TerminatingGW["fa:fa-sign-out-alt Terminating Gateway"]
+        
+        subgraph "Application Pod"
+            direction LR
+            App["App Container"]
+            VaultAgent["fa:fa-user-secret Vault Agent Sidecar"]
+            SharedVolume{{"fa:fa-folder-open<br/>Shared Volume"}}
+            
+            App -- "6. Reads Secret" --> SharedVolume
+            VaultAgent -- "5. Writes Secret" --> SharedVolume
+        end
+        
+        VaultAgent -- "1. Auth (k8s SA)" --> Vault
+        Vault -- "2. Issues Vault Token" --> VaultAgent
+        VaultAgent -- "3. Requests DB Creds" --> Vault
+        Vault -- "4. Issues Dynamic DB Creds" --> VaultAgent
+        App -- "7. DB Connection Request" --> TerminatingGW
+        TerminatingGW -- "8. Connects to DB w/ Creds" --> Database
+    end
+    
+    classDef platform fill:#e0f2fe,stroke:#3b82f6;
+    classDef app fill:#dcfce7,stroke:#22c55e;
+    classDef external fill:#fee2e2,stroke:#ef4444;
+    
+    class Vault, TerminatingGW platform;
+    class App, VaultAgent, SharedVolume app;
+    class Database external;
+
+```
 
