@@ -359,6 +359,73 @@ graph TD
 
 
 ```
+How the Security Model Extends to Virtual Machines
+The fundamental principles of zero-trust security, automatic mTLS encryption, and identity-based authorization (Intentions) remain identical for VMs. The only difference is the mechanism used to bootstrap the initial identity of the workload.
+
+On OpenShift: A service's identity is automatically derived from its OpenShift Service Account. The Consul agent can securely verify this identity with the Kubernetes API server before issuing a certificate.
+
+On Virtual Machines: Since there is no native Service Account, Consul uses a different trusted method to establish a workload's identity. This is typically done via a bootstrap token. An administrator generates a short-lived, single-use token from Consul and securely provides it to the VM (e.g., via a configuration management tool like Ansible). The Consul agent on the VM uses this token to authenticate with the Consul servers, prove its identity, and then receive its mTLS certificate.
+
+Once that initial identity is established, the VM is a first-class citizen of the service mesh.
+
+Answering Your Scenarios for a Hybrid VM/OpenShift Mesh
+Let's address your specific questions within this hybrid context:
+
+A) Do service-to-service communications need certificates or Functional IDs?
+
+No. Just like in the OpenShift-only model, services running on VMs do not need traditional certificates, API tokens, or Functional IDs to communicate with other services inside the mesh (whether those services are on other VMs or in OpenShift pods).
+
+The communication is secured by the mesh itself. The flow is identical to the one described in the playbook:
+
+The application on the VM makes a plaintext request to its local Envoy proxy.
+
+The Envoy proxy automatically wraps the request in an encrypted mTLS tunnel.
+
+This tunnel is established with the Envoy proxy of the destination service, which could be on another VM or in an OpenShift pod.
+
+The destination Envoy decrypts the traffic and forwards the plaintext request to the destination application.
+
+The mesh handles all the complexity of certificate management and identity verification automatically.
+
+B) When talking to databases outside the mesh, what is the best way to avoid Functional ID utilization?
+
+The solution is the same as for OpenShift services and is one of the most powerful security patterns in this architecture: integrate with HashiCorp Vault.
+
+Vault Agent on the VM: A Vault Agent is installed on the VM alongside your application and the Consul agent.
+
+VM Authentication to Vault: The Vault Agent authenticates to Vault. For VMs, this is often done using a trusted identity method like AppRole, where the VM is provisioned with a secret RoleID and SecretID to log in.
+
+Dynamic Database Credentials: The application on the VM requests database credentials from its local Vault Agent. The agent, in turn, asks Vault's Database Secrets Engine to generate a unique, short-lived username and password for the database.
+
+Secure Egress: The application uses these dynamic credentials to connect to the database. For full mesh benefits, this traffic should be routed through a Terminating Gateway, which provides a single, controlled, and observable exit point from the mesh to the external database.
+
+This pattern completely eliminates the need for static, long-lived Functional IDs, drastically improving your security posture.
+
+C) How can we reduce the need for certificates and tokens?
+
+The service mesh fundamentally reduces this need by shifting from a static, secret-based security model to a dynamic, identity-based one.
+
+For Service-to-Service: The mesh's automatic mTLS replaces all requirements for manually issued certificates or API tokens between services. The identity of the service is the credential.
+
+For Service-to-External-System (like databases): The integration with Vault replaces the need for static tokens and passwords with dynamic, on-demand secrets.
+
+How the Mesh Reduces the Workload
+
+The service mesh automates tasks that are traditionally manual, error-prone, and time-consuming for security and operations teams:
+
+Automates Certificate Management: Eliminates the entire lifecycle of generating, distributing, and rotating thousands of TLS certificates for internal services.
+
+Centralizes Authorization: Provides a single place (Consul Intentions) to define and enforce firewall rules based on logical service names, rather than brittle IP addresses.
+
+Decouples Security from the Application: Developers no longer need to write custom code for authentication, encryption, or certificate handling. They can focus on business logic, knowing the platform provides security by default.
+
+Provides a Unified Security Plane: The same security rules and practices apply whether a service is running as a container in OpenShift or as a process on a VM, simplifying governance and compliance.
+
+Hybrid Architecture Diagram (OpenShift + VMs)
+This diagram illustrates how a service running on a VM can securely communicate with both a service in an OpenShift pod and an external database.
+
+
+
 ```mermaid
 graph TD
     subgraph "External Systems"
