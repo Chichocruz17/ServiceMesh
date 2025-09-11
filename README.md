@@ -280,6 +280,14 @@ graph TD
     class AppA,SidecarA,MeshGW1 cluster1
     class AppB,SidecarB,MeshGW2 cluster2
 ```
+Service Identity & Secrets Management
+The service mesh, integrated with HashiCorp Vault, provides a modern, identity-based approach to security that dramatically reduces the need for traditional secrets like Functional IDs, static certificates, and API tokens.
+
+4.1 Service-to-Service Communication
+In a traditional model, services might need API tokens or manually managed certificates to authenticate with each other. The service mesh eliminates this requirement.
+
+The Service Mesh Answer: No, services do not need Functional IDs or developer-managed tokens to communicate. The mesh provides a strong, automated identity to every workload based on the SPIFFE standard. Communication is authenticated and encrypted using short-lived automatic mTLS certificates managed by the Consul control plane. Developers no longer manage this layer of security; it is an automatic feature of the platform.
+
 ```mermaid
 graph TD
     subgraph "Consul Control Plane"
@@ -308,6 +316,10 @@ graph TD
     class ConsulServer control;
     class AppA,AppB,SidecarA,SidecarB data;
 ```
+Communicating with External Databases
+The traditional method for a service to connect to a database involves using a long-lived Functional ID and password, often stored in an OpenShift secret. This is a significant security risk.
+
+The Service Mesh Answer: The best practice is to integrate with HashiCorp Vault's Database Secrets Engine. The application pod is injected with a Vault Agent sidecar, which authenticates to Vault using its OpenShift Service Account identity. The application can then request dynamic, on-demand database credentials from Vault. These credentials are unique, have a short time-to-live (TTL), and are automatically revoked. This completely eliminates the need for static Functional IDs for databases.
 
 ```mermaid
 graph TD
