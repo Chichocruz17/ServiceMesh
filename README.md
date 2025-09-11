@@ -255,3 +255,30 @@ graph TD
     class RetailServices,CorporateServices,PaylahServices cell
 ```
 
+```mermaid
+graph TD
+    subgraph "OpenShift Cluster 1 (Partition: p1)"
+        direction TB
+        subgraph "App-A Pod"
+            AppA["App-A Container"] -- "1. curl app-b.p2..." --> SidecarA["Envoy Sidecar"]
+        end
+        SidecarA -- "2. Routes to local Mesh GW" --> MeshGW1["Mesh Gateway (p1)"]
+    end
+
+    subgraph "OpenShift Cluster 2 (Partition: p2)"
+        direction TB
+        MeshGW2["Mesh Gateway (p2)"] -- "4. Forwards to App-B sidecar" --> SidecarB["Envoy Sidecar"]
+        subgraph "App-B Pod"
+             SidecarB -- "Delivers request" --> AppB["App-B Container"]
+        end
+    end
+
+    MeshGW1 -- "3. Encrypted mTLS Peering Traffic" --> MeshGW2
+
+    classDef cluster1 fill:#e0f2fe,stroke:#3b82f6
+    classDef cluster2 fill:#eef2ff,stroke:#6366f1
+    class AppA,SidecarA,MeshGW1 cluster1
+    class AppB,SidecarB,MeshGW2 cluster2
+```
+
+
