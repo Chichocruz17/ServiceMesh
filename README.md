@@ -1,15 +1,14 @@
 # ServiceMesh # ServiceMesh# ServiceMesh # ServiceMesh
-
-mermaid ``` 
+```mermaid 
 graph TD
-    subgraph On-Premise OpenShift Cluster
+    subgraph "On-Premise OpenShift Cluster"
         direction TB
 
-        subgraph Control Plane
+        subgraph "Control Plane"
             subgraph "Consul Servers (StatefulSet)"
-                S1[Consul Server 1]
-                S2[Consul Server 2]
-                S3[Consul Server 3]
+                S1["Consul Server 1"]
+                S2["Consul Server 2"]
+                S3["Consul Server 3"]
             end
             S1 <-.->|"Raft Consensus"| S2
             S2 <-.->|"Raft Consensus"| S3
@@ -19,16 +18,16 @@ graph TD
         subgraph "Data Plane (Worker Nodes)"
             direction LR
             subgraph "Worker Node 1"
-                C1[Consul Client (DaemonSet Pod)]
+                C1["Consul Client (DaemonSet Pod)"]
                 subgraph "Application Pod A"
-                    App1[App Container] <--> E1[Envoy Sidecar]
+                    App1["App Container"] <--> E1["Envoy Sidecar"]
                 end
             end
 
             subgraph "Worker Node 2"
-                C2[Consul Client (DaemonSet Pod)]
+                C2["Consul Client (DaemonSet Pod)"]
                 subgraph "Application Pod B"
-                    App2[App Container] <--> E2[Envoy Sidecar]
+                    App2["App Container"] <--> E2["Envoy Sidecar"]
                 end
             end
         end
@@ -47,6 +46,6 @@ graph TD
     classDef appPod fill:#fefce8,stroke:#eab308,stroke-width:2px
     class S1,S2,S3 controlPlane
     class C1,C2,E1,E2 dataPlane
-    class App1,App2 appPod 
+    class App1,App2 appPod
 
 ```
