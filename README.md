@@ -90,3 +90,39 @@ graph TD
     class MGW,ServiceA_West,ServiceB_West passive
 
 ```
+```mermaid
+
+graph LR
+    subgraph "East Datacenter"
+        direction TB
+        subgraph "Consul Servers (East)"
+            S_E1["Server E1"]
+            S_E2["Server E2"]
+            S_E3["Server E3"]
+        end
+        S_E1 <-.->|"LAN Gossip"| S_E2
+        S_E2 <-.->|"LAN Gossip"| S_E3
+        MGE[Mesh Gateway East]
+    end
+
+    subgraph "West Datacenter"
+        direction TB
+        subgraph "Consul Servers (West)"
+            S_W1["Server W1"]
+            S_W2["Server W2"]
+            S_W3["Server W3"]
+        end
+        S_W1 <-.->|"LAN Gossip"| S_W2
+        S_W2 <-.->|"LAN Gossip"| S_W3
+        MGW[Mesh Gateway West]
+    end
+
+    S_E1 <-->|"WAN Gossip"| S_W1
+    S_E2 <-->|"WAN Gossip"| S_W2
+
+    %% Define RPC Forwarding for cross-datacenter query
+    style MGE fill:#dcfce7,stroke:#22c55e
+    style MGW fill:#dcfce7,stroke:#22c55e
+
+```
+
