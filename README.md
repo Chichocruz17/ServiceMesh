@@ -125,4 +125,56 @@ graph LR
     style MGW fill:#dcfce7,stroke:#22c55e
 
 ```
+```mermaid
+graph TD
+    %% Define the main actors and entry point
+    Client([External Client]) -- "API Request" --> IngressGateway;
 
+    %% Define the main cluster boundary
+    subgraph "On-Premise OpenShift Cluster"
+        %% Ingress Gateway is the edge component
+        subgraph "Consul Ingress Gateway"
+            IngressGateway("fa:fa-network-wired Ingress Gateway<br/><i>Lua Filter Enforced Here</i>");
+        end
+
+        %% Define the logical cells
+        subgraph "Common Cell"
+            CLS("Cell Localization Service (CLS)");
+            GLS_DB[(GLS DB)];
+            CLS -- "Queries" --> GLS_DB;
+        end
+
+        subgraph "Retail Cell"
+            RetailServices("Retail Banking Services");
+        end
+
+        subgraph "Corporate Cell"
+            CorporateServices("Corporate Banking Services");
+        end
+
+        subgraph "Paylah Cell (Wallet)"
+            PaylahServices("Payment & Wallet Services");
+        end
+
+        %% Define the routing logic flows from the Gateway
+        IngressGateway -- "<b>Rules 1-5: Fast Path Routing</b><br/>Directly routes based on Path/Payload<br/>(e.g., Product Code '010')" --> RetailServices;
+        IngressGateway -- " " --> CorporateServices;
+        IngressGateway -- " " --> PaylahServices;
+
+        IngressGateway -- "<b>Rule 6: Dynamic Lookup</b><br/>Forwards request context to CLS" --> CLS;
+        CLS -.->|"<b>Rule 7: Lookup & Respond</b><br/>Returns target cell name (e.g., 'retail-cell')"| IngressGateway;
+
+        %% Final routing after dynamic lookup
+        IngressGateway -.->|"<b>Routes based on CLS response</b>"| RetailServices;
+        IngressGateway -.->|" "| CorporateServices;
+        IngressGateway -.->|" "| PaylahServices;
+    end
+
+    %% Styling
+    style Client fill:#f3e8ff,stroke:#8b5cf6
+    style IngressGateway fill:#e0f2fe,stroke:#3b82f6,stroke-width:2px
+    style CLS fill:#fefce8,stroke:#eab308,stroke-width:2px
+    style GLS_DB fill:#fefce8,stroke:#eab308
+    classDef cell fill:#dcfce7,stroke:#22c55e,stroke-width:1px,color:#15803d
+    class RetailServices,CorporateServices,PaylahServices cell
+```
