@@ -1,0 +1,26 @@
+apiVersion: consul.hashicorp.com/v1alpha1
+kind: IngressGateway
+metadata:
+  name: ingress-gateway
+  namespace: consul
+spec:
+  listeners:
+    - port: 8443
+      protocol: https
+      tls:
+        mode: Terminate
+        secretName: ingress-tls-cert
+      services:
+        - name: '*'
+  config:
+    envoy_extensions:
+      - name: envoy.filters.http.lua
+        typed_config:
+          "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
+          inline_code: |
+            -- The entire Lua script from the example above would be pasted here.
+            -- In a production setup, this would reference a ConfigMap for better management.
+            function envoy_on_request(request_handle)
+              -- ...
+            end
+            -- ...
