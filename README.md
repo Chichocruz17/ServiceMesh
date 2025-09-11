@@ -359,4 +359,52 @@ graph TD
 
 
 ```
+```mermaid
+graph TD
+    subgraph "External Systems"
+        Database["fa:fa-database Legacy Database"]
+    end
+
+    subgraph "On-Premise Infrastructure"
+        direction LR
+
+        subgraph "OpenShift Cluster"
+            Vault["fa:fa-key HashiCorp Vault"]
+            TerminatingGW["fa:fa-sign-out-alt Terminating Gateway"]
+            subgraph "Pod A (OpenShift)"
+                AppA["App-A Container"]
+                SidecarA["fa:fa-shield-alt Envoy Sidecar A"]
+            end
+        end
+
+        subgraph "Virtual Machine Environment"
+            subgraph "VM B"
+                AppB["App-B Process"]
+                VaultAgent["fa:fa-user-secret Vault Agent"]
+                SidecarB["fa:fa-shield-alt Envoy Sidecar B"]
+            end
+        end
+    end
+
+    %% Define Flows
+    AppB -- "Plaintext Request" --> SidecarB
+    SidecarB -- "Automatic mTLS" --> SidecarA
+    SidecarA -- "Plaintext to App" --> AppA
+
+    VaultAgent -- "Authenticates to Vault" --> Vault
+    AppB -- "Requests DB Secret" --> VaultAgent
+    AppB -- "DB Connection w/ Dynamic Secret" --> TerminatingGW
+    TerminatingGW -- "Proxies to DB" --> Database
+
+    classDef k8s fill:#dbeafe,stroke:#3b82f6;
+    classDef vm fill:#dcfce7,stroke:#22c55e;
+    classDef external fill:#fee2e2,stroke:#ef4444;
+    classDef platform fill:#e0f2fe,stroke:#3b82f6;
+
+    class Pod,AppA,SidecarA k8s;
+    class Vault,TerminatingGW platform;
+    class VMB,AppB,VaultAgent,SidecarB vm;
+    class Database external;
+
+```
 
