@@ -337,13 +337,14 @@ graph TD
         TerminatingGW -- "8. Connects to DB w/ Creds" --> Database
     end
     
-    classDef platform fill:#e0f2fe,stroke:#3b82f6;
-    classDef app fill:#dcfce7,stroke:#22c55e;
-    classDef external fill:#fee2e2,stroke:#ef4444;
+    classDef platform fill:#e0f2fe,stroke:#3b82f6,stroke-width:2px;
+    classDef app fill:#dcfce7,stroke:#22c55e,stroke-width:2px;
+    classDef external fill:#fee2e2,stroke:#ef4444,stroke-width:2px;
     
-    class Vault, TerminatingGW platform;
-    class App, VaultAgent, SharedVolume app;
+    class Vault,TerminatingGW platform;
+    class App,VaultAgent,SharedVolume app;
     class Database external;
+
 
 ```
 
