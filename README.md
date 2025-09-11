@@ -290,7 +290,6 @@ graph TD
         subgraph "Pod A"
             AppA["App-A Container"]
             SidecarA["fa:fa-shield-alt Envoy Sidecar A"]
-            AppA -- "Logical Call" --> AppB
         end
         
         subgraph "Pod B"
@@ -307,7 +306,7 @@ graph TD
     classDef control fill:#e0f2fe,stroke:#3b82f6;
     classDef data fill:#dcfce7,stroke:#22c55e;
     class ConsulServer control;
-    class AppA, AppB, SidecarA, SidecarB data;
+    class AppA,AppB,SidecarA,SidecarB data;
 ```
 
 ```mermaid
