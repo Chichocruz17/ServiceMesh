@@ -20,23 +20,23 @@ graph TD
             subgraph "Worker Node 1"
                 C1["Consul Client (DaemonSet Pod)"]
                 subgraph "Application Pod A"
-                    App1["App Container"] <--> E1["Envoy Sidecar"]
+                    App1["App Container"] --> E1["Envoy Sidecar"]
                 end
             end
 
             subgraph "Worker Node 2"
                 C2["Consul Client (DaemonSet Pod)"]
                 subgraph "Application Pod B"
-                    App2["App Container"] <--> E2["Envoy Sidecar"]
+                    App2["App Container"] --> E2["Envoy Sidecar"]
                 end
             end
         end
 
         %% Define Interactions
-        Control Plane -- "Distributes Config (gRPC)" --> C1
-        Control Plane -- "Distributes Config (gRPC)" --> C2
-        C1 -- "Manages Proxy" --> E1
-        C2 -- "Manages Proxy" --> E2
+        S2 -- "Distributes Config (gRPC)" --> C1
+        S2 -- "Distributes Config (gRPC)" --> C2
+        C1 -- "Manages Local Proxy" --> E1
+        C2 -- "Manages Local Proxy" --> E2
         E1 -- "Service Traffic via mTLS" --> E2
     end
 
