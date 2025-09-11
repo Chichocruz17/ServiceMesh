@@ -49,3 +49,44 @@ graph TD
     class App1,App2 appPod
 
 ```
+
+
+```mermaid
+graph TD
+    subgraph "User Traffic"
+        U(Users)
+    end
+
+    GLB[Global Load Balancer]
+
+    subgraph "East Datacenter (Active)"
+        OC_East["OpenShift Cluster (East)"]
+        subgraph OC_East
+          MGE[Mesh Gateway East]
+          ServiceA_East["Service A"]
+          ServiceB_East["Service B"]
+        end
+    end
+
+    subgraph "West Datacenter (Passive)"
+      OC_West["OpenShift Cluster (West)"]
+      subgraph OC_West
+        MGW[Mesh Gateway West]
+        ServiceA_West["Service A"]
+        ServiceB_West["Service B"]
+      end
+    end
+
+    U --> GLB
+    GLB -- "100% Traffic" --> MGE
+    GLB -.->|"0% Traffic (Failover Path)"| MGW
+    MGE --> ServiceA_East --> ServiceB_East
+    MGW --> ServiceA_West --> ServiceB_West
+    MGE <-.->|"Federated Control Plane Traffic"| MGW
+
+    classDef active fill:#dcfce7,stroke:#22c55e
+    classDef passive fill:#f1f5f9,stroke:#64748b
+    class MGE,ServiceA_East,ServiceB_East active
+    class MGW,ServiceA_West,ServiceB_West passive
+
+```
