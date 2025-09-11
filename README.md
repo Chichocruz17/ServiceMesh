@@ -283,7 +283,7 @@ graph TD
 Service Identity & Secrets Management
 The service mesh, integrated with HashiCorp Vault, provides a modern, identity-based approach to security that dramatically reduces the need for traditional secrets like Functional IDs, static certificates, and API tokens.
 
-4.1 Service-to-Service Communication
+Service-to-Service Communication
 In a traditional model, services might need API tokens or manually managed certificates to authenticate with each other. The service mesh eliminates this requirement.
 
 The Service Mesh Answer: No, services do not need Functional IDs or developer-managed tokens to communicate. The mesh provides a strong, automated identity to every workload based on the SPIFFE standard. Communication is authenticated and encrypted using short-lived automatic mTLS certificates managed by the Consul control plane. Developers no longer manage this layer of security; it is an automatic feature of the platform.
