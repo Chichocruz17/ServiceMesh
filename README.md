@@ -474,6 +474,24 @@ graph TD
     class Database external;
 
 ```
+Explanation of the Diagram's Key Concepts
+Cells and Namespaces: The diagram shows the four logical cells. The Retail Cell is expanded to show its implementation across two distinct OpenShift namespaces: retail-ns-a (active) and retail-ns-b (passive). This "twin namespace" pattern provides a robust mechanism for intra-cluster high availability and blue/green deployments.
+
+Gateways:
+
+Ingress Gateway: The single entry point for all external traffic from clients. It is responsible for TLS termination and initial routing.
+
+Mesh Gateway: Handles all service-to-service communication with other peered OpenShift clusters, ensuring this traffic is secure and controlled.
+
+Terminating Gateway: Manages all egress traffic from the service mesh to external systems (like a legacy database), providing a secure and observable exit point.
+
+CRD-Driven Traffic Control:
+
+The ServiceResolver CRD is the key. It inspects the tags on the services running in retail-ns-a and retail-ns-b and groups them into logical subsets named active and passive.
+
+The ServiceSplitter CRD reads these subsets and applies the traffic routing rule. In this diagram, it is configured to send 100% of traffic to the active subset and 0% to the passive subset, effectively creating an active-passive setup. To perform a blue/green deployment or a failover, an operator would simply update this CRD to shift traffic to the passive namespace.
+
+
 ```mermaid
 graph TD
     %% --- External Entities ---
@@ -552,7 +570,72 @@ graph TD
     class IngressGW,MeshGW,TerminatingGW gateway;
     class Resolver,Splitter crd;
     class CorporateApp,PaylahApp,CommonApp cell;
-    class Client,ExternalCluster,ExternalDB external;
+    class Client,ExternalCluster,ExternalDB external;class Client,ExternalCluster,ExternalDB external;
     class RetailAppA activeNamespace;
     class RetailAppB passiveNamespace;
+```
+
+
+```mermaid
+graph TD
+    subgraph "Non-Production Environments (Total Segregation)"
+        direction LR
+        
+        subgraph "Development Mesh"
+            DevCluster["fa:fa-flask OpenShift Cluster (Dev)"]
+            DevConsul["fa:fa-server Consul Control Plane (Dev)"]
+        end
+
+        subgraph "SIT Mesh"
+            SITCluster["fa:fa-vials OpenShift Cluster (SIT)"]
+            SITConsul["fa:fa-server Consul Control Plane (SIT)"]
+        end
+        
+        subgraph "UAT Mesh"
+            UATCluster["fa:fa-clipboard-check OpenShift Cluster (UAT)"]
+            UATConsul["fa:fa-server Consul Control Plane (UAT)"]
+        end
+    end
+
+    style DevMesh fill:#fefce8,stroke:#eab308;
+    style SITMesh fill:#f0f9ff,stroke:#0ea5e9;
+    style UATMesh fill:#f5f3ff,stroke:#8b5cf6;
+
+    linkStyle 0,1,2,3,4,5 stroke-width:0px
+
+```
+
+```mermaid
+graph TD
+    GLB["fa:fa-globe-americas Global Load Balancer (GLB)"];
+
+    subgraph "Unified Production Service Mesh"
+        direction TB
+
+        subgraph "Primary Datacenter (DC1)"
+            direction LR
+            BlueCluster["fa:fa-server-rack Blue Cluster (Production N)<br/><i>Receives 100% Traffic</i>"]
+            GreenCluster["fa:fa-server-rack Green Cluster (Staging N+1)<br/><i>Receives 0% Traffic</i>"]
+        end
+
+        subgraph "Secondary Datacenter (DC2)"
+            ContingencyCluster["fa:fa-server-rack Contingency Cluster (DR)<br/><i>Idle / Failover Target</i>"]
+        end
+        
+        BlueCluster <--> |"fa:fa-link Cluster Peering (mTLS)"| GreenCluster;
+        BlueCluster <--> |"fa:fa-link Cluster Peering (mTLS)"| ContingencyCluster;
+        GreenCluster <--> |"fa:fa-link Cluster Peering (mTLS)"| ContingencyCluster;
+    end
+
+    GLB -- "Active Traffic" --> BlueCluster;
+    GLB -.-> |"Failover Path"| ContingencyCluster;
+    
+    classDef prod fill:#dcfce7,stroke:#22c55e;
+    classDef staging fill:#fef9c3,stroke:#f59e0b;
+    classDef dr fill:#fee2e2,stroke:#ef4444;
+    
+    class BlueCluster prod;
+    class GreenCluster staging;
+    class ContingencyCluster dr;
+
 ```
