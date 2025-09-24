@@ -474,4 +474,85 @@ graph TD
     class Database external;
 
 ```
+```mermaid
+graph TD
+    %% --- External Entities ---
+    Client([fa:fa-user External Client])
+    ExternalCluster([fa:fa-cloud External Peered Cluster])
+    ExternalDB[(fa:fa-database Legacy Database)]
 
+    %% --- Main Cluster Boundary ---
+    subgraph "On-Premise OpenShift Cluster"
+        direction TB
+
+        %% --- Gateways ---
+        subgraph "Gateway Layer"
+            direction LR
+            IngressGW["fa:fa-network-wired Ingress Gateway"]
+            MeshGW["fa:fa-globe-americas Mesh Gateway"]
+            TerminatingGW["fa:fa-sign-out-alt Terminating Gateway"]
+        end
+
+        %% --- CRD Configuration ---
+        subgraph "Consul L7 Configuration (CRDs)"
+            direction LR
+            Resolver["ServiceResolver<br/>(Defines 'active' & 'passive' subsets<br/>based on namespace tags)"]
+            Splitter["ServiceSplitter<br/>(Controls traffic distribution)"]
+            Resolver -- "Defines Subsets" --> Splitter
+        end
+
+        %% --- Logical Cells & Namespaces ---
+        subgraph "Application Cells"
+            direction LR
+
+            %% --- Retail Cell (with Twin Namespaces) ---
+            subgraph "Retail Cell"
+                direction TB
+                subgraph "Namespace: retail-ns-a (active)"
+                    RetailAppA["Retail App Pods"]
+                end
+                subgraph "Namespace: retail-ns-b (passive)"
+                    RetailAppB["Retail App Pods"]
+                end
+            end
+
+            %% --- Other Cells ---
+            subgraph "Corporate Cell"
+                CorporateApp["Corporate App Pods"]
+            end
+            subgraph "Paylah Cell (Wallet)"
+                PaylahApp["Payment App Pods"]
+            end
+            subgraph "Common Cell"
+                CommonApp["Shared Services<br/>(e.g., Cell Localization)"]
+            end
+        end
+
+        %% --- Traffic Flows ---
+        Client -- "HTTPS Traffic" --> IngressGW
+        IngressGW -- "Routes to 'retail-service'" --> Splitter
+        Splitter -- "100% Traffic" --> RetailAppA
+        Splitter -.-> |"0% Traffic (Failover Path)"| RetailAppB
+
+        RetailAppA -- "Internal Call" --> CommonApp
+        CorporateApp -- "Egress Traffic" --> TerminatingGW
+        TerminatingGW -- "Proxies to External DB" --> ExternalDB
+        
+        MeshGW <--> |"Cross-Cluster Peering Traffic"| ExternalCluster
+    end
+
+    %% --- Styling ---
+    classDef gateway fill:#e0f2fe,stroke:#3b82f6,stroke-width:2px;
+    classDef crd fill:#fefce8,stroke:#eab308,stroke-width:2px;
+    classDef cell fill:#f0fdf4,stroke:#22c55e,stroke-width:1px;
+    classDef external fill:#f1f5f9,stroke:#64748b;
+    classDef activeNamespace fill:#dcfce7,stroke:#16a34a,stroke-width:2px,stroke-dasharray: 5 5;
+    classDef passiveNamespace fill:#f1f5f9,stroke:#94a3b8,stroke-width:2px,stroke-dasharray: 5 5;
+
+    class IngressGW,MeshGW,TerminatingGW gateway;
+    class Resolver,Splitter crd;
+    class CorporateApp,PaylahApp,CommonApp cell;
+    class Client,ExternalCluster,ExternalDB external;
+    class RetailAppA activeNamespace;
+    class RetailAppB passiveNamespace;
+```
