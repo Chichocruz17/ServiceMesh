@@ -574,7 +574,35 @@ graph TD
     class RetailAppA activeNamespace;
     class RetailAppB passiveNamespace;
 ```
+This distributed architecture introduces significant networking and security challenges:
 
+Intelligent Routing: How do we route traffic to the correct cell based on complex business logic?
+
+Security & Isolation: How do we enforce strict security boundaries, ensuring services in one cell cannot improperly access another?
+
+Service Discovery: How do we maintain a global, real-time registry of all services across all cells and datacenters?
+
+Encryption: How can we encrypt all communication between services automatically?
+
+Resilience: How do we ensure the entire system is resilient to failures within a cell or an entire datacenter?
+
+This document outlines the architecture for solving these challenges by implementing HashiCorp Consul as a service mesh. Consul provides a consistent control plane for networking, security, and resiliency across the entire cell-based platform running on OpenShift.
+
+2. Managing the Full Environment Lifecycle with a Service Mesh
+For a regulated banking environment, the architecture must support a full lifecycle of six distinct environments, each with specific security and connectivity requirements. A service mesh provides the framework to manage this lifecycle, enforcing strict segregation where needed and enabling controlled communication for production operations.
+
+2.1 Principle 1: Total Isolation for Non-Production Environments
+The Development, SIT, and UAT environments must be completely segregated from each other and from production. There must be no shared network paths or control planes between them.
+
+Architecture: Each non-production environment is implemented as a completely independent and isolated service mesh.
+
+Each environment (Dev, SIT, UAT) runs on its own dedicated OpenShift cluster(s).
+
+Each environment has its own dedicated Consul control plane (servers, clients, gateways).
+
+Crucially, there are no Cluster Peering connections between these environments.
+
+This "air-gapped" mesh architecture guarantees that a deployment or failure in the Development environment can never impact the SIT environment, providing the total segregation required for safe testing and validation.
 
 ```mermaid
 graph TD
@@ -610,6 +638,17 @@ graph TD
 
 
 ```
+Principle 2: A Unified Mesh for Production, Staging, and DR
+The Blue (N), Green (N+1), and Contingency environments work together to ensure seamless deployments and high availability. They are architected as a single, unified service mesh connected via Cluster Peering.
+
+Blue Cluster (Production N): Runs in the primary datacenter (DC1) and serves all live user traffic.
+
+Green Cluster (Staging N+1): Runs in the primary datacenter (DC1) alongside Blue. It hosts the next version of applications, ready for promotion.
+
+Contingency Cluster (DR): Runs in a secondary datacenter (DC2). It is an identical, idle copy of the Blue environment, ready to take over in a disaster recovery scenario.
+
+This unified mesh allows for controlled, policy-driven traffic shifting between the environments for blue/green deployments and DR failover.
+
 
 ```mermaid
 graph TD
