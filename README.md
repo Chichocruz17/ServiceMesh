@@ -597,11 +597,17 @@ graph TD
         end
     end
 
-    style DevMesh fill:#fefce8,stroke:#eab308;
-    style SITMesh fill:#f0f9ff,stroke:#0ea5e9;
-    style UATMesh fill:#f5f3ff,stroke:#8b5cf6;
+    classDef devStyle fill:#fefce8,stroke:#eab308;
+    classDef sitStyle fill:#f0f9ff,stroke:#0ea5e9;
+    classDef uatStyle fill:#f5f3ff,stroke:#8b5cf6;
 
-    linkStyle 0,1,2,3,4,5 stroke-width:0px
+    class DevCluster devStyle;
+    class DevConsul devStyle;
+    class SITCluster sitStyle;
+    class SITConsul sitStyle;
+    class UATCluster uatStyle;
+    class UATConsul uatStyle;
+
 
 ```
 
